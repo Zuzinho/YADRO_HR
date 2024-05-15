@@ -27,5 +27,4 @@ const (
 
 	systemOnClientGoAwayBodyLen     = 1
 	systemOnClientSitAtTableBodyLen = 2
-	systemOnErrorBodyLen            = 1
 )
