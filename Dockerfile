@@ -26,7 +26,7 @@ WORKDIR /app
 COPY --from=builder /app/task .
 
 # Копируем другие необходимые файлы (если есть)
-COPY test.txt .
+COPY tests/test.txt .
 
 # Указываем команду по умолчанию для запуска
 ENTRYPOINT ["./task"]
