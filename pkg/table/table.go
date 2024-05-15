@@ -53,10 +53,10 @@ func (table *Table) CommonTime() string {
 type Tables []*Table
 
 func NewTablesWithLen(len int) *Tables {
-	tbls := make(Tables, len)
-	for i := range tbls {
-		tbls[i] = NewTable(i + 1)
+	tables := make(Tables, len)
+	for i := range tables {
+		tables[i] = NewTable(i + 1)
 	}
 
-	return &tbls
+	return &tables
 }
