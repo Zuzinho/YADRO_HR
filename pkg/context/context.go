@@ -40,3 +40,24 @@ func (ctx *Context) TablesMoney() []string {
 
 	return results
 }
+
+func (ctx *Context) SitAtTable(event *Event, client username.UserName, table *table.Table) {
+	table.Owner = &client
+	ctx.FreeTableCount -= 1
+	ctx.Users[client] = table
+	table.CurrentSession = duration.NewDuration(event.Time)
+	ctx.Queue.Delete(client)
+}
+
+func (ctx *Context) GoAway(event *Event, client username.UserName) {
+	oldTable := ctx.Users[client]
+	delete(ctx.Users, client)
+
+	if oldTable == nil {
+		ctx.Queue.Delete(client)
+		return
+	}
+
+	oldTable.OverCurrentSession(event.Time)
+	ctx.FreeTableCount += 1
+}
