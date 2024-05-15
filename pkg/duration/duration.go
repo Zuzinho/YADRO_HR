@@ -45,19 +45,13 @@ func (duration *Duration) Minutes() int {
 }
 
 func (duration *Duration) InTime(t time.Time) bool {
-	return duration.Start.Before(t) && duration.End.After(t)
+	return (duration.Start.Before(t) && duration.End.After(t)) || duration.Start.Equal(t) || duration.End.Equal(t)
 }
 
 type Durations []*Duration
 
 func NewDurations() *Durations {
 	durs := make(Durations, 0)
-
-	return &durs
-}
-
-func NewDurationsWithLen(len int) *Durations {
-	durs := make(Durations, len)
 
 	return &durs
 }
