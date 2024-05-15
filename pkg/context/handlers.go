@@ -3,7 +3,6 @@ package context
 import (
 	"sort"
 	"strconv"
-	"yadro/pkg/duration"
 	"yadro/pkg/username"
 )
 
@@ -30,10 +29,10 @@ func (handler *Handler) Handle(event *Event, ctx *Context) (*Event, error) {
 func (handler *Handler) Close(ctx *Context) ([]*Event, error) {
 	userNames := make([]username.UserName, len(ctx.Users))
 
-	i := 0
+	index := 0
 	for userName := range ctx.Users {
-		userNames[i] = userName
-		i++
+		userNames[index] = userName
+		index++
 	}
 
 	userNames = append(userNames, ctx.Queue.Array()...)
@@ -100,11 +99,7 @@ func onClientSitAtTable(event *Event, ctx *Context) (*Event, error) {
 		ctx.FreeTableCount += 1
 	}
 
-	table.Owner = &client
-	ctx.FreeTableCount -= 1
-	ctx.Users[client] = table
-	table.CurrentSession = duration.NewDuration(event.Time)
-	ctx.Queue.Delete(client)
+	ctx.SitAtTable(event, client, table)
 
 	return nil, nil
 }
@@ -139,15 +134,7 @@ func onClientGoAway(event *Event, ctx *Context) (*Event, error) {
 		return NewEvent(systemOnErrorStatus, event.Time, clientUnknownError), nil
 	}
 
-	delete(ctx.Users, client)
-
-	if oldTable == nil {
-		ctx.Queue.Delete(client)
-		return nil, nil
-	}
-
-	oldTable.OverCurrentSession(event.Time)
-	ctx.FreeTableCount += 1
+	ctx.GoAway(event, client)
 
 	return onSystemClientSitAtTable(
 		NewEvent(onClientSitAtTableStatus, event.Time, append(event.Body, strconv.Itoa(oldTable.ID))...),
@@ -161,16 +148,7 @@ func onSystemClientGoAway(event *Event, ctx *Context) (*Event, error) {
 
 	client := username.UserName(event.Body[0])
 
-	oldTable := ctx.Users[client]
-	delete(ctx.Users, client)
-
-	if oldTable == nil {
-		ctx.Queue.Delete(client)
-		return nil, nil
-	}
-
-	oldTable.OverCurrentSession(event.Time)
-	ctx.FreeTableCount += 1
+	ctx.GoAway(event, client)
 
 	return NewEvent(systemOnClientGoAwayStatus, event.Time, event.Body...), nil
 }
@@ -191,10 +169,7 @@ func onSystemClientSitAtTable(event *Event, ctx *Context) (*Event, error) {
 	}
 	table := (*ctx.Tables)[tableID-1]
 
-	table.Owner = &client
-	ctx.FreeTableCount -= 1
-	ctx.Users[client] = table
-	table.CurrentSession = duration.NewDuration(event.Time)
+	ctx.SitAtTable(event, client, table)
 
 	return NewEvent(systemOnClientSitAtTableStatus, event.Time, event.Body...), nil
 }
